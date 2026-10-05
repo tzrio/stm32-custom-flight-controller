@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FC Ground Control Station</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, system-ui, sans-serif;
+        background: #111a22;
+        color: #e8f0f7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at 72% 20%, #203d4b, #111a22 45%);
+      }
+      .top {
+        height: 58px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 20px;
+        background: #18242e;
+        border-bottom: 1px solid #30424e;
+      }
+      .brand {
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+      .brand b,
+      .good {
+        color: #4ee2af;
+      }
+      .crumb {
+        flex: 1;
+        color: #90a7b6;
+        font-size: 0.9rem;
+      }
+      .link {
+        font-size: 0.82rem;
+        color: #a9bac5;
+      }
+      .dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #667b88;
+        margin-right: 6px;
+      }
+      .dot.on {
+        background: #4ee2af;
+        box-shadow: 0 0 9px #4ee2af;
+      }
+      button {
+        border: 0;
+        border-radius: 6px;
+        padding: 9px 12px;
+        color: #eff9ff;
+        background: #2c7d9b;
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        background: #3596b9;
+      }
+      button.secondary {
+        background: #2a3944;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 76px 1fr;
+        min-height: calc(100vh - 58px);
+      }
+      nav {
+        background: #15212a;
+        border-right: 1px solid #30424e;
+        padding-top: 12px;
+      }
+      nav a {
+        height: 68px;
+        display: grid;
+        place-items: center;
+        gap: 3px;
+        color: #91a6b4;
+        font-size: 0.65rem;
+        text-decoration: none;
+        border-left: 3px solid transparent;
+      }
+      nav a span {
+        font-size: 1.4rem;
+      }
+      nav a.active {
+        color: #fff;
+        background: #20333d;
+        border-left-color: #4ee2af;
+      }
+      main {
+        padding: 25px;
+        max-width: 1420px;
+        width: 100%;
+        margin: auto;
+      }
+      .heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+      .heading h1 {
+        margin: 0;
+        font-size: 1.45rem;
+      }
+      .heading p {
+        margin: 4px 0 0;
+        color: #91a6b4;
+        font-size: 0.9rem;
+      }
+      .badge {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        color: #4ee2af;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(380px, 1.35fr) minmax(290px, 0.8fr);
+        gap: 18px;
+      }
+      .card {
+        background: #1a2832e8;
+        border: 1px solid #324651;
+        border-radius: 9px;
+        box-shadow: 0 13px 32px #0003;
+      }
+      .head {
+        padding: 14px 17px;
+        border-bottom: 1px solid #30424e;
+        font-weight: 700;
+      }
+      .stage {
+        min-height: 475px;
+        position: relative;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background: linear-gradient(145deg, #1b4455, #16232b 52%, #11222b);
+      }
+      .grid {
+        position: absolute;
+        inset: -40%;
+        background-image:
+          linear-gradient(#ffffff13 1px, transparent 1px),
+          linear-gradient(90deg, #ffffff13 1px, transparent 1px);
+        background-size: 44px 44px;
+        transform: rotateX(58deg);
+      }
+      .horizon {
+        position: absolute;
+        width: 150%;
+        height: 2px;
+        background: #b8d4db88;
+        transform: rotate(-3deg);
+      }
+      .wrap {
+        width: 360px;
+        height: 360px;
+        perspective: 900px;
+        display: grid;
+        place-items: center;
+        z-index: 1;
+      }
+      .drone {
+        width: 480px;
+        height: 360px;
+        filter: drop-shadow(0 16px 12px #0008);
+      }
+      .drone canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .label {
+        position: absolute;
+        bottom: 17px;
+        text-align: center;
+        color: #bdd3de;
+        font-size: 0.82rem;
+        z-index: 2;
+      }
+      .foot {
+        padding: 12px 17px;
+        color: #7f97a5;
+        font-size: 0.77rem;
+        border-top: 1px solid #30424e;
+      }
+      .side {
+        display: grid;
+        gap: 18px;
+      }
+      .pad {
+        padding: 16px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .metric {
+        background: #12202a;
+        border: 1px solid #2b414d;
+        border-radius: 6px;
+        padding: 10px;
+      }
+      .metric small {
+        display: block;
+        color: #8ca4b1;
+        font-size: 0.72rem;
+        margin-bottom: 4px;
+      }
+      .metric output {
+        font-family: ui-monospace, monospace;
+        font-size: 0.94rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 13px;
+      }
+      .wizard h2 {
+        font-size: 1rem;
+        margin: 5px 0;
+      }
+      .wizard p,
+      .notice {
+        color: #9db2bf;
+        line-height: 1.5;
+        font-size: 0.87rem;
+      }
+      .steps {
+        display: flex;
+        gap: 5px;
+        margin: 13px 0;
+      }
+      .step {
+        height: 5px;
+        flex: 1;
+        border-radius: 5px;
+        background: #334750;
+      }
+      .step.done {
+        background: #4ee2af;
+      }
+      .step.current {
+        background: #54b9db;
+      }
+      .instruction {
+        border-left: 3px solid #4ee2af;
+        background: #112029;
+        padding: 12px;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        min-height: 82px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .stage {
+          min-height: 380px;
+        }
+      }
+      @media (max-width: 600px) {
+        .crumb,
+        .link {
+          display: none;
+        }
+        .app {
+          grid-template-columns: 58px 1fr;
+        }
+        main {
+          padding: 14px;
+        }
+        .wrap {
+          transform: scale(0.8);
+        }
+        nav a {
+          font-size: 0;
+        }
+      }
+      .rx-status{margin:14px auto 0;max-width:1370px;padding:10px 14px;border:1px solid #555b60;border-radius:6px;background:#151719;color:#cdd1d4;font-size:.82rem}.rx-status b{color:#fff}
+      .radio-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:20px}.radio-sticks{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:16px}.stick{position:relative;aspect-ratio:1;border:1px solid #6a7176;border-radius:7px;background:linear-gradient(#ffffff10 1px,transparent 1px),linear-gradient(90deg,#ffffff10 1px,transparent 1px),#111315;background-size:25% 25%}.stick:before,.stick:after{content:"";position:absolute;background:#777d82}.stick:before{width:1px;height:100%;left:50%}.stick:after{height:1px;width:100%;top:50%}.stick b{position:absolute;top:9px;left:10px;font-size:.78rem}.stick i{position:absolute;width:18px;height:18px;margin:-9px;border-radius:50%;background:#e7e9ea;border:2px solid #151719;box-shadow:0 0 0 1px #8c9398;transition:left .05s,top .05s}.radio-channels{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.radio-channel{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #454b50;border-radius:5px;background:#111315;font-family:ui-monospace,monospace;font-size:.82rem}.radio-channel b{color:#fff}.radio-note{margin:0 20px 20px;color:#aeb4b9;font-size:.86rem}.motor-slider{display:block;padding:13px;border:1px solid #4e555a;border-radius:6px;background:#15181b}.motor-slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}.motor-slider small{color:#aeb4b9}.motor-slider output{font-family:ui-monospace,monospace;font-weight:700}.motor-slider input{width:100%;accent-color:#e4e7e9}@media(max-width:700px){.radio-layout{grid-template-columns:1fr}.radio-sticks{grid-template-columns:1fr 1fr}}
+      .arm-config{margin:0 20px 20px;padding:15px;border:1px solid #555b60;border-radius:7px;background:#151719;display:flex;align-items:end;gap:12px;flex-wrap:wrap}.arm-config b{display:block;width:100%}.arm-config label{display:grid;gap:5px;font-size:.78rem;color:#aeb4b9}.arm-config select{background:#111315;color:#fff;border:1px solid #666d72;border-radius:4px;padding:8px}.arm-config button{padding:8px 12px}.arm-config small{width:100%;color:#aeb4b9}
+      /* Fly View: monochrome GCS layout */
+      .fly-view { position:relative; min-height:calc(100vh - 58px); overflow:hidden; background:#101214; }
+      .setup-panel{min-height:520px}.parameter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.parameter-row{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:10px;align-items:center;padding:12px;border-bottom:1px solid #41474c;font-family:ui-monospace,monospace;font-size:.84rem}.parameter-row input{width:100%;background:#111315;border:1px solid #666d72;border-radius:4px;color:#fff;padding:7px}.battery-hero{padding:26px;display:grid;grid-template-columns:1fr 1fr;gap:18px}.battery-value{font-size:3rem;font-weight:700}.battery-state{padding:16px;background:#121416;border:1px solid #555b60;border-radius:8px}.muted{color:#aeb4b9;font-size:.88rem}.actuator-layout{display:grid;grid-template-columns:minmax(290px,.9fr) minmax(320px,1.1fr);gap:18px;padding:18px}.quad-layout{position:relative;aspect-ratio:1;max-width:420px;margin:auto;border:1px solid #53595e;border-radius:8px;background:radial-gradient(circle,#2e3438 0 14%,transparent 14.5%),linear-gradient(45deg,transparent 49.5%,#666d72 50%,transparent 50.5%),linear-gradient(-45deg,transparent 49.5%,#666d72 50%,transparent 50.5%)}.quad-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100px;height:70px;border:1px solid #d9dcde;border-radius:8px;background:#171a1c;display:grid;place-content:center;text-align:center;font-size:.78rem;font-weight:700}.quad-core small{color:#aeb4b9;font-weight:400}.motor{position:absolute;width:86px;height:86px;border:1px solid #8e959a;border-radius:50%;background:#202427;display:grid;place-content:center;text-align:center;font-size:.74rem}.motor b{font-size:1rem}.motor small{color:#aeb4b9}.motor-1{right:7%;top:7%}.motor-2{right:7%;bottom:7%}.motor-3{left:7%;bottom:7%}.motor-4{left:7%;top:7%}.motor-output{color:#fff;font-family:ui-monospace,monospace}.safety-box{border:1px solid #767d82;border-left:3px solid #f1f2f3;background:#141719;padding:14px;border-radius:6px;margin:14px 0}.safety-box label{display:flex;gap:9px;align-items:flex-start;cursor:pointer}.test-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.test-grid button{min-height:62px;text-align:left}.test-grid button small{display:block;color:#aeb4b9;margin-top:3px}.test-status{min-height:2.6em;color:#cdd1d4;margin-top:12px;font-size:.86rem}@media(max-width:700px){.parameter-grid,.battery-hero,.actuator-layout{grid-template-columns:1fr}.parameter-row{grid-template-columns:1fr}}
+      .fly-map { position:absolute; inset:0; width:100%; height:100%; border:0; filter:grayscale(1) contrast(.82) brightness(.52); }
+      .map-shade { position:absolute; inset:0; background:linear-gradient(90deg,#0006,transparent 30%,transparent 70%,#0007); pointer-events:none; }
+      .connect-card { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(420px,calc(100% - 40px)); padding:28px; background:#181b1ee8; border:1px solid #646a70; border-radius:10px; text-align:center; box-shadow:0 20px 60px #0009; }
+      .connect-card h2 { margin:0 0 8px; font-size:1.2rem; }.connect-card p{color:#b7bcc1;line-height:1.5;font-size:.9rem}.hud { position:absolute; right:24px; bottom:24px; width:265px; color:#f4f5f6; background:#151719e8; border:1px solid #777c81; border-radius:10px; overflow:hidden; box-shadow:0 12px 30px #0008; }.hud canvas{display:block;width:100%;height:auto;background:#111}.hud-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;font-size:.78rem}.hud-stats span{color:#aeb4b9}.hud-stats b{display:block;margin-top:2px;font-size:.95rem}.flight-status{position:absolute;left:20px;bottom:20px;background:#151719dc;border:1px solid #5f656a;border-radius:7px;padding:10px 14px;font-size:.8rem;color:#dce0e3}.flight-status b{color:#fff}.mode-pill{position:absolute;left:20px;top:20px;padding:8px 12px;background:#151719e6;border:1px solid #666c72;border-radius:6px;font-size:.78rem}.active-view{display:none!important}.mono .card,.mono .top,.mono nav{background:#191c1f}.mono .stage{background:#15181b}.mono .grid{opacity:.3}@media(max-width:700px){.hud{right:12px;bottom:12px;width:210px}.flight-status{left:12px;bottom:12px}.fly-view{min-height:calc(100vh - 58px)}}
+    </style>
+  </head>
+  <body class="mono">
+    <header class="top">
+      <div class="brand">FC <b>GCS</b></div>
+      <div id="crumb" class="crumb">Fly View / Live telemetry</div>
+      <div class="link">
+        <span id="dot" class="dot"></span
+        ><span id="link">USB disconnected</span>
+      </div>
+      <button id="connect">Connect</button>
+    </header>
+    <div class="app">
+      <nav>
+        <a id="nav-fly" class="active" href="#"><span>⌁</span>Fly View</a
+        ><a id="nav-sensors" href="#"><span>◉</span>Sensors</a
+        ><a id="nav-radio" href="#"><span>⌁</span>Radio</a
+        ><a id="nav-battery" href="#"><span>▱</span>Battery</a
+        ><a id="nav-actuators" href="#"><span>✣</span>Actuators</a
+        ><a id="nav-parameters" href="#"><span>≡</span>Parameters</a>
+      </nav>
+      <section id="fly-view" class="fly-view">
+        <iframe class="fly-map" title="Map" src="https://www.openstreetmap.org/export/embed.html?bbox=106.77%2C-6.24%2C106.90%2C-6.14&amp;layer=mapnik"></iframe>
+        <div class="map-shade"></div><div class="mode-pill">FLY · PLAN · ANALYZE &nbsp;|&nbsp; MANUAL · GPS unavailable</div>
+        <div id="connect-card" class="connect-card"><h2>Flight Controller disconnected</h2><p>Hubungkan BlackPill melalui USB untuk membuka live telemetry dan sensor setup.</p><button id="map-connect">Connect Vehicle</button></div>
+        <div id="hud" class="hud hidden"><canvas id="hud-canvas" width="530" height="390"></canvas><div class="hud-stats"><div><span>Altitude (AMSL)</span><b>— m</b></div><div><span>Climb rate</span><b>— m/s</b></div><div><span>Ground speed</span><b>— m/s</b></div><div><span>Heading</span><b id="heading">—°</b></div></div></div>
+        <div class="flight-status">Status: <b id="flight-state">DISCONNECTED</b><br><span id="flight-detail">Awaiting USB link</span></div>
+      </section>
+      <main id="setup-view" class="hidden">
+        <div id="rx-actuator-status" class="rx-status">Receiver: <b>WAITING</b> · Arm: <b>DISARMED</b> · Throttle: <b>—</b></div>
+        <div class="heading">
+          <div>
+            <h1 id="setup-title">Sensors</h1>
+            <p id="setup-subtitle">GY-BMI160 6-DoF · Gyroscope &amp; Accelerometer</p>
+          </div>
+          <span id="health" class="badge">WAITING FOR IMU</span>
+        </div>
+        <div id="sensor-panel" class="layout setup-panel">
+          <section class="card">
+            <div class="head">Vehicle Attitude</div>
+            <div class="stage">
+              <div class="grid"></div>
+              <div class="wrap">
+                <div id="drone" class="drone">
+                  <canvas id="plane" width="480" height="360" aria-label="3D rear-view airplane"></canvas>
+                </div>
+              </div>
+              <div class="label">
+                <b class="good">3D rear view — nose points away from you</b><br />
+                Right yaw moves the nose to the right on screen.
+              </div>
+            </div>
+            <div class="foot">
+              Roll, pitch, yaw memakai complementary filter. Yaw akan drift
+              karena GY-BMI160 tidak mempunyai magnetometer.
+            </div>
+          </section>
+          <aside class="side">
+            <section class="card">
+              <div class="head">Live Telemetry</div>
+              <div class="pad">
+                <div class="metrics">
+                  <div class="metric">
+                    <small>ROLL</small><output id="roll">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>PITCH</small><output id="pitch">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>YAW</small><output id="yaw">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>ACCEL X</small><output id="ax">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>ACCEL Y</small><output id="ay">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>ACCEL Z</small><output id="az">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>GYRO X</small><output id="gx">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>GYRO Y</small><output id="gy">—</output>
+                  </div>
+                  <div class="metric">
+                    <small>GYRO Z</small><output id="gz">—</output>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button id="reset" class="secondary" disabled>
+                    Set heading 0°
+                  </button>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="pad wizard">
+                <span class="badge">CALIBRATION WIZARD</span>
+                <h2>Calibrate Sensors</h2>
+                <p>
+                  Ikuti posisi bodi drone seperti QGroundControl. Kamu tidak
+                  perlu mengetahui sumbu X/Y/Z sensor.
+                </p>
+                <div id="steps" class="steps"></div>
+                <div id="instruction" class="instruction">
+                  Connect ke FC untuk memulai.
+                </div>
+                <div class="actions">
+                  <button id="gyro" class="secondary" disabled>
+                    Calibrate Gyroscope</button
+                  ><button id="acc" class="secondary" disabled>
+                    Calibrate Accelerometer</button
+                  ><button id="capture" disabled class="hidden">
+                    Capture position
+                  </button>
+                </div>
+                <div id="status" class="notice">
+                  Gyro: FC diam. Accelerometer: enam orientasi fisik,
+                  masing-masing dua detik.
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+        <section id="radio-panel" class="setup-panel hidden card"><div class="head">Radio Setup / Input Test</div><div class="radio-layout"><div><span class="badge" id="radio-link-state">WAITING FOR iBUS</span><h2>Stick Inputs</h2><div class="radio-sticks"><div class="stick"><b>ROLL / PITCH</b><i id="stick-rp"></i></div><div class="stick"><b>YAW / THROTTLE</b><i id="stick-yt"></i></div></div></div><div><h2>Channel Monitor</h2><div class="radio-channels"><div class="radio-channel"><span>CH1 Roll</span><b id="rc-ch1">—</b></div><div class="radio-channel"><span>CH2 Pitch</span><b id="rc-ch2">—</b></div><div class="radio-channel"><span>CH3 Throttle</span><b id="rc-ch3">—</b></div><div class="radio-channel"><span>CH4 Yaw</span><b id="rc-ch4">—</b></div><div class="radio-channel"><span>CH5 Arm</span><b id="rc-ch5">—</b></div><div class="radio-channel"><span>CH6 Aux</span><b id="rc-ch6">—</b></div><div class="radio-channel"><span>CH7 Aux</span><b id="rc-ch7">—</b></div><div class="radio-channel"><span>CH8 Aux</span><b id="rc-ch8">—</b></div></div></div></div><p class="radio-note">Gerakkan stick dan switch transmitter. Rentang normal sekitar 1000–2000 µs, pusat sekitar 1500 µs. CH5 di atas 1500 µs digunakan sebagai switch arm saat mode motor test tidak aktif.</p></section>
+        <section id="battery-panel" class="setup-panel hidden card"><div class="head">Power / Battery</div><div class="battery-hero"><div><span class="badge">BATTERY MONITOR</span><div id="battery-voltage" class="battery-value">— V</div><p class="muted">PA0 voltage monitor · divider required</p></div><div class="battery-state"><b id="battery-state">Monitor disabled</b><p class="muted">Pasang divider 100kΩ / 10kΩ ke PA0, lalu aktifkan <code>BATTERY_MONITOR_ENABLED</code> di firmware. Baterai tidak boleh tersambung langsung ke PA0.</p></div></div></section>
+        <section id="actuators-panel" class="setup-panel hidden card"><div class="head">Actuators / Motor Assignment</div><div class="actuator-layout"><div><div class="quad-layout" aria-label="Quad-X motor layout"><div class="quad-core">QUAD-X<small>nose / front ↑</small></div><div class="motor motor-1"><b>M1</b><small>FR · CW<br><span id="motor-1" class="motor-output">1000 µs</span></small></div><div class="motor motor-2"><b>M2</b><small>RR · CCW<br><span id="motor-2" class="motor-output">1000 µs</span></small></div><div class="motor motor-3"><b>M3</b><small>RL · CW<br><span id="motor-3" class="motor-output">1000 µs</span></small></div><div class="motor motor-4"><b>M4</b><small>FL · CCW<br><span id="motor-4" class="motor-output">1000 µs</span></small></div></div><p class="muted">Dilihat dari atas: front mengikuti arah heading/pin 7 GY-BMI160. Arah CW/CCW adalah rencana pemasangan propeller, bukan hasil test motor.</p></div><div><span class="badge">PWM OUTPUT · TIM4 · 400 Hz</span><h2>Motor Test</h2><p class="muted">M1 PB6/CH1 · M2 PB7/CH2 · M3 PB8/CH3 · M4 PB9/CH4. Mixer rate PID Quad-X berjalan pada control loop 500 Hz.</p><div class="safety-box"><label><input id="props-removed" type="checkbox"><span><b>Propeller sudah dilepas.</b><br><small>Saya memahami test ini memberi PWM 1100 µs pada satu motor selama maksimum 3 detik.</small></span></label></div><div class="actions"><button id="enable-motor-test" class="secondary" disabled>Enable motor test</button><button id="disable-motor-test" class="secondary" disabled>Stop &amp; lock motors</button></div><div class="test-grid"><button class="motor-test" data-motor="1" disabled><b>Test M1</b><small>Front-right · PB6</small></button><button class="motor-test" data-motor="2" disabled><b>Test M2</b><small>Rear-right · PB7</small></button><button class="motor-test" data-motor="3" disabled><b>Test M3</b><small>Rear-left · PB8</small></button><button class="motor-test" data-motor="4" disabled><b>Test M4</b><small>Front-left · PB9</small></button></div><p id="motor-test-status" class="test-status">Connect FC, receiver harus valid, arm switch OFF, dan throttle rendah.</p></div></div></section>
+        <section id="parameters-panel" class="setup-panel hidden card"><div class="head">Parameters</div><div class="pad"><p class="muted">Parameter inti firmware. Nilai ini saat ini dikompilasi ke firmware; penyimpanan parameter persisten adalah tahap berikutnya.</p><div class="parameter-grid"><div class="card"><div class="parameter-row"><b>Parameter</b><b>Nilai</b><b>Unit</b></div><div class="parameter-row"><span>IMU_LOOP_HZ</span><input value="500" readonly><span>Hz</span></div><div class="parameter-row"><span>IMU_ODR</span><input value="800" readonly><span>Hz</span></div><div class="parameter-row"><span>GYRO_LPF_GAIN</span><input value="0.18" readonly><span>—</span></div><div class="parameter-row"><span>ACC_LPF_GAIN</span><input value="0.12" readonly><span>—</span></div></div><div class="card"><div class="parameter-row"><b>Safety / RX</b><b>Nilai</b><b>Unit</b></div><div class="parameter-row"><span>RC_PROTOCOL</span><input value="iBUS" readonly><span>USART2</span></div><div class="parameter-row"><span>RC_FAILSAFE</span><input value="100" readonly><span>ms</span></div><div class="parameter-row"><span>ARM_CHANNEL</span><input value="CH5" readonly><span>switch</span></div><div class="parameter-row"><span>THROTTLE_LOW</span><input value="1050" readonly><span>µs</span></div></div></div></div></section>
+      </main>
+    </div>
+    <script>
+      const A = 16384,
+        G = 65.6,
+        D = 180 / Math.PI,
+        $ = (x) => document.getElementById(x);
+      let port,
+        reader,
+        on = false,
+        last,
+        roll = 0,
+        pitch = 0,
+        yaw = 0,
+        headingOffset = 0,
+        busy = false,
+        step = -1,
+        receiverReady = false,
+        fcArmed = false,
+        motorTestReady = false;
+      const radioChannels = Array(14).fill(0);
+      const motorSliderTimers = {};
+      document.querySelector(".test-grid").innerHTML = [1, 2, 3, 4].map((motor) => {
+        const labels = ["Front-right · PB6", "Rear-right · PB7", "Rear-left · PB8", "Front-left · PB9"];
+        return `<label class="motor-slider"><span class="motor-slider-head"><span><b>M${motor}</b><br><small>${labels[motor - 1]}</small></span><output id="motor-slider-value-${motor}">1000 µs</output></span><input class="motor-slider-input" type="range" min="1000" max="2200" step="1" value="1000" data-motor="${motor}" disabled></label>`;
+      }).join("");
+      document.querySelector(".safety-box small").textContent = "Slider bench test 1000–2200 µs; satu motor aktif maksimum 3 detik setiap perubahan nilai. Propeller wajib dilepas.";
+      const armOptions = Array.from({ length: 14 }, (_, index) => `<option value="${index + 1}" ${index === 4 ? "selected" : ""}>CH${index + 1}</option>`).join("");
+      $("radio-panel").querySelector(".radio-note").insertAdjacentHTML("beforebegin", `<div class="arm-config"><b>Arm Switch Configuration</b><label>Arm channel<select id="arm-channel">${armOptions}</select></label><label>Switch action<select id="arm-polarity"><option value="HIGH">Arm when HIGH (&gt;1500 µs)</option><option value="LOW">Arm when LOW (&lt;1500 µs)</option></select></label><button id="apply-arm-config" class="secondary" disabled>Apply arm setting</button><small id="arm-config-status">Default: CH5, arm when HIGH. Konfigurasi ini berlaku sampai FC restart.</small></div>`);
+      const poses = [
+        [
+          "Posisi normal",
+          "Letakkan FC datar di meja: modul GY-BMI160 menghadap langit.",
+        ],
+        ["Terbalik", "Balikkan FC: modul GY-BMI160 menghadap meja."],
+        [
+          "Hidung ke atas",
+          "Tegakkan FC sehingga sisi depan / hidung drone menghadap langit.",
+        ],
+        [
+          "Ekor ke atas",
+          "Tegakkan FC sehingga sisi belakang / ekor drone menghadap langit.",
+        ],
+        [
+          "Sisi kanan ke atas",
+          "Miringkan FC sampai sisi kanan drone menghadap langit.",
+        ],
+        [
+          "Sisi kiri ke atas",
+          "Miringkan FC sampai sisi kiri drone menghadap langit.",
+        ],
+      ];
+      const out = (id, n, u) => ($(id).textContent = n.toFixed(1) + u);
+      function draw() {
+        renderPlane();
+        renderHud();
+        out("roll", roll, "°");
+        out("pitch", pitch, "°");
+        out("yaw", yaw, "°");
+      }
+      function renderRadio() {
+        const clamp = (value) => Math.max(0, Math.min(100, value));
+        const percent = (value) => clamp(((value || 1000) - 1000) / 10);
+        for (let index = 0; index < 8; index++) {
+          const output = $(`rc-ch${index + 1}`);
+          if (output) output.textContent = radioChannels[index] ? `${radioChannels[index]} µs` : "—";
+        }
+        $("radio-link-state").textContent = receiverReady ? "iBUS LINK OK" : "iBUS FAILSAFE";
+        $("stick-rp").style.left = `${percent(radioChannels[0])}%`;
+        $("stick-rp").style.top = `${100 - percent(radioChannels[1])}%`;
+        $("stick-yt").style.left = `${percent(radioChannels[3])}%`;
+        $("stick-yt").style.top = `${100 - percent(radioChannels[2])}%`;
+      }
+      function renderHud() {
+        const canvas = $("hud-canvas"), ctx = canvas.getContext("2d"), cx = 265, cy = 126, r = 105;
+        ctx.clearRect(0,0,530,390); ctx.fillStyle="#111315"; ctx.fillRect(0,0,530,390);
+        ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip();
+        ctx.fillStyle="#d9dcde"; ctx.fillRect(cx-r,cy-r,2*r,2*r);
+        ctx.translate(cx,cy + pitch * 3.0); ctx.rotate(-roll*Math.PI/180);
+        ctx.fillStyle="#555a5e"; ctx.fillRect(-250,0,500,220); ctx.strokeStyle="#f5f6f7";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-260,0);ctx.lineTo(260,0);ctx.stroke();
+        ctx.strokeStyle="#f5f6f7";ctx.lineWidth=2;[-20,-10,10,20].forEach(v=>{ctx.beginPath();ctx.moveTo(-25,v*3);ctx.lineTo(25,v*3);ctx.stroke()});ctx.restore();
+        ctx.strokeStyle="#f5f6f7";ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();ctx.fillStyle="#111315";ctx.fillRect(cx-42,cy-5,84,10);ctx.strokeStyle="#f5f6f7";ctx.beginPath();ctx.moveTo(cx-42,cy);ctx.lineTo(cx-10,cy);ctx.lineTo(cx,cy+8);ctx.lineTo(cx+10,cy);ctx.lineTo(cx+42,cy);ctx.stroke();
+        ctx.fillStyle="#f5f6f7";ctx.font="700 20px system-ui";ctx.textAlign="center";ctx.fillText(`${pitch.toFixed(1)}°`,cx,cy-74);
+        const headingYaw = yaw - headingOffset; const ccx=265, ccy=294;ctx.strokeStyle="#888f95";ctx.lineWidth=2;ctx.beginPath();ctx.arc(ccx,ccy,65,0,Math.PI*2);ctx.stroke();ctx.save();ctx.translate(ccx,ccy);ctx.rotate(-headingYaw*Math.PI/180);ctx.fillStyle="#e9ebed";ctx.beginPath();ctx.moveTo(0,-52);ctx.lineTo(-17,31);ctx.lineTo(0,20);ctx.lineTo(17,31);ctx.closePath();ctx.fill();ctx.restore();ctx.fillStyle="#fff";ctx.font="600 14px system-ui";ctx.fillText("N",ccx,ccy-74);ctx.fillText("S",ccx,ccy+86);ctx.fillText("W",ccx-82,ccy+5);ctx.fillText("E",ccx+82,ccy+5);$("heading").textContent=`${((headingYaw+360)%360).toFixed(0)}°`;
+      }
+      function renderPlane() {
+        const canvas = $("plane");
+        const ctx = canvas.getContext("2d");
+        const radians = (degrees) => (degrees * Math.PI) / 180;
+        const cr = Math.cos(radians(roll)), sr = Math.sin(radians(roll));
+        const cp = Math.cos(radians(pitch)), sp = Math.sin(radians(pitch));
+        const cy = Math.cos(radians(yaw)), sy = Math.sin(radians(yaw));
+        const rotate = ([x, y, z]) => {
+          // Aircraft axes: X right, Y forward/nose, Z up.
+          const x1 = cr * x + sr * z, z1 = -sr * x + cr * z;
+          const y2 = cp * y - sp * z1, z2 = sp * y + cp * z1;
+          return [cy * x1 - sy * y2, sy * x1 + cy * y2, z2];
+        };
+        const project = (point) => {
+          const [x, y, z] = point;
+          const scale = 720 / (520 + y);
+          return [240 + x * scale, 252 - z * scale];
+        };
+        const faces = [
+          { p: [[-14,-70,8],[14,-70,8],[18,35,13],[-18,35,13]], c: "#3a8ab2" },
+          { p: [[-14,-70,-8],[14,-70,-8],[18,35,-13],[-18,35,-13]], c: "#16425d" },
+          { p: [[-18,35,13],[18,35,13],[0,112,0]], c: "#5abde0" },
+          { p: [[-18,35,-13],[18,35,-13],[0,112,0]], c: "#1a5575" },
+          { p: [[-18,2,3],[-154,5,0],[-126,-22,0],[-18,-18,3]], c: "#2b779c" },
+          { p: [[18,2,3],[154,5,0],[126,-22,0],[18,-18,3]], c: "#3b96bb" },
+          { p: [[-15,-54,4],[-82,-60,1],[-62,-84,1],[-15,-78,4]], c: "#276d91" },
+          { p: [[15,-54,4],[82,-60,1],[62,-84,1],[15,-78,4]], c: "#3486aa" },
+          { p: [[-10,-65,8],[10,-65,8],[0,-93,52]], c: "#45a8c9" },
+          { p: [[-10,-65,-8],[10,-65,-8],[0,-93,52]], c: "#1b5574" },
+        ].map((face) => ({ ...face, p: face.p.map(rotate) }));
+        faces.sort((a, b) => b.p.reduce((sum, v) => sum + v[1], 0) - a.p.reduce((sum, v) => sum + v[1], 0));
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const face of faces) {
+          const points = face.p.map(project);
+          ctx.beginPath(); ctx.moveTo(...points[0]);
+          points.slice(1).forEach((point) => ctx.lineTo(...point));
+          ctx.closePath(); ctx.fillStyle = face.c; ctx.fill();
+          ctx.strokeStyle = "#b9ebf8"; ctx.lineWidth = 1.4; ctx.stroke();
+        }
+        const nose = project(rotate([0, 112, 0]));
+        ctx.fillStyle = "#4ee2af"; ctx.beginPath();
+        ctx.arc(nose[0], nose[1], 5, 0, Math.PI * 2); ctx.fill();
+        ctx.font = "700 12px system-ui"; ctx.textAlign = "center";
+        ctx.fillText("FORWARD", nose[0], nose[1] - 13);
+      }
+      function controls() {
+        $("gyro").disabled = !on || busy;
+        $("acc").disabled = !on || busy;
+        $("capture").disabled = !on || busy || step < 0;
+        $("apply-arm-config").disabled = !on;
+        motorControls();
+      }
+      function motorControls() {
+        const acknowledged = $("props-removed").checked;
+        $("enable-motor-test").disabled = !on || !acknowledged || motorTestReady;
+        $("disable-motor-test").disabled = !on || !motorTestReady;
+        document.querySelectorAll(".motor-slider-input").forEach((slider) => {
+          slider.disabled = !on || !motorTestReady || !acknowledged;
+        });
+      }
+      function resetMotorSliders() {
+        document.querySelectorAll(".motor-slider-input").forEach((slider) => {
+          slider.value = 1000;
+          $(`motor-slider-value-${slider.dataset.motor}`).textContent = "1000 µs";
+        });
+      }
+      function steps() {
+        $("steps").innerHTML = poses
+          .map(
+            (_, i) =>
+              `<i class="step ${i < step ? "done" : ""} ${i === step ? "current" : ""}"></i>`,
+          )
+          .join("");
+      }
+      function pose() {
+        steps();
+        let p = poses[step];
+        $("instruction").textContent =
+          `${step + 1}/6 — ${p[0]}: ${p[1]} Setelah stabil, tekan Capture position.`;
+        $("capture").textContent = "Capture: " + p[0];
+        controls();
+      }
+      async function send(s) {
+        if (!on) return;
+        let w = port.writable.getWriter();
+        try {
+          await w.write(new TextEncoder().encode(s + "\n"));
+        } finally {
+          w.releaseLock();
+        }
+      }
+      function cal(p) {
+        if (p[1] === "START") {
+          busy = true;
+          controls();
+          $("instruction").textContent =
+            p[2] === "GYRO"
+              ? "Kalibrasi gyro berjalan. Jangan sentuh FC selama 5 detik."
+              : "Merekam posisi. Tahan FC benar-benar diam selama 2 detik.";
+          return;
+        }
+        if (p[1] === "RESULT" && p[2] === "GYRO") {
+          busy = false;
+          controls();
+          $("instruction").textContent = "Gyro selesai. FC siap dikalibrasi.";
+          $("status").textContent =
+            "Gyro offset diterapkan: " + p.slice(3).join(", ");
+          return;
+        }
+        if (p[1] === "RESULT" && p[2] === "FACE") {
+          busy = false;
+          step++;
+          if (step < 6) {
+            pose();
+            $("status").textContent =
+              `Posisi ${step}/6 direkam. Lanjutkan posisi berikutnya.`;
+          } else {
+            $("capture").classList.add("hidden");
+            steps();
+            $("instruction").textContent =
+              "Enam posisi direkam. Menghitung koreksi accelerometer…";
+          }
+          controls();
+          return;
+        }
+        if (p[1] === "RESULT" && p[2] === "ACC") {
+          busy = false;
+          controls();
+          $("instruction").textContent =
+            "Kalibrasi accelerometer selesai. Gerakkan drone virtual untuk memverifikasi respons.";
+          $("status").textContent =
+            "Sukses. Koreksi diterapkan selama FC menyala.";
+          return;
+        }
+        if (p[1] === "ERROR") {
+          busy = false;
+          controls();
+          $("status").textContent =
+            p[2] === "DUPLICATE_FACE"
+              ? "Posisi ini sama dengan sisi yang sudah direkam. Pilih sisi fisik lain lalu capture lagi."
+              : "FC error: " + p.slice(2).join(" ");
+        }
+      }
+      function consume(line) {
+        let p = line.trim().split(",");
+        if (p[0] === "CAL") {
+          cal(p);
+          return;
+        }
+        if (p[0] === "CFG") {
+          if (p[1] === "ARM") {
+            $("arm-channel").value = p[2];
+            $("arm-polarity").value = p[3];
+            $("arm-config-status").textContent = `Applied: ${p[2]}, arm when ${p[3]}. FC disarmed for safety.`;
+          } else if (p[1] === "ERROR") {
+            $("arm-config-status").textContent = `FC rejected setting: ${p.slice(2).join(" ")}`;
+          }
+          return;
+        }
+        if (p[0] === "RAD") {
+          receiverReady = p[1] === "RX_OK";
+          p.slice(2, 16).forEach((value, index) => {
+            const channel = Number(value);
+            if (Number.isFinite(channel)) radioChannels[index] = channel;
+          });
+          renderRadio();
+          return;
+        }
+        if (p[0] === "FC") {
+          receiverReady = p[1] === "RX_OK";
+          fcArmed = p[2] === "ARMED";
+          $("flight-state").textContent = receiverReady ? p[2] : "FAILSAFE";
+          $("rx-actuator-status").innerHTML = `Receiver: <b>${receiverReady ? "RX_OK" : "FAILSAFE"}</b> · Arm: <b>${p[2]}</b> · Throttle: <b>${p[3]} µs</b>`;
+          $("flight-detail").textContent = receiverReady
+            ? `iBUS OK · throttle ${p[3]} µs`
+            : "No valid iBUS frame · motors locked";
+          const voltage = Number(p[4]);
+          if (voltage > 0) {
+            $("battery-voltage").textContent = `${voltage.toFixed(2)} V`;
+            $("battery-state").textContent = "Battery monitor active";
+          }
+          if (p.length >= 13) {
+            p.slice(5, 19).forEach((value, index) => {
+              const channel = Number(value);
+              if (Number.isFinite(channel)) radioChannels[index] = channel;
+            });
+            renderRadio();
+          }
+          motorControls();
+          return;
+        }
+        if (p[0] === "MOT") {
+          if (p[1] === "TEST_READY" || p[1] === "LOCKED") {
+            motorTestReady = p[1] === "TEST_READY";
+            $("enable-motor-test").textContent = motorTestReady ? "Motor test active" : "Enable motor test";
+            if (!motorTestReady) resetMotorSliders();
+            p.slice(2, 6).forEach((value, index) => {
+              if ($(`motor-${index + 1}`)) $(`motor-${index + 1}`).textContent = `${value} µs`;
+            });
+            $("motor-test-status").textContent = motorTestReady
+              ? "Motor test enabled. Test satu motor pada satu waktu; firmware menghentikan setelah 3 detik."
+              : "Motor output locked at 1000 µs.";
+            motorControls();
+            return;
+          }
+          if (p[1] === "TEST_ENABLED") {
+            motorTestReady = true;
+            $("motor-test-status").textContent = "Motor test enabled. Pilih satu motor untuk test 3 detik.";
+          } else if (p[1] === "TEST_DISABLED") {
+            motorTestReady = false;
+            $("enable-motor-test").textContent = "Enable motor test";
+            resetMotorSliders();
+            $("motor-test-status").textContent = "Motor test dihentikan dan output dikunci.";
+          } else if (p[1] === "TEST") {
+            $("motor-test-status").textContent = `M${p[2]} sedang diberi ${p[3]} µs (auto-stop 3 detik).`;
+          } else if (p[1] === "ERROR") {
+            motorTestReady = false;
+            $("enable-motor-test").textContent = "Enable motor test";
+            resetMotorSliders();
+            $("motor-test-status").textContent = `Ditolak firmware: ${p.slice(2).join(" ")}. Pastikan checkbox propeller dilepas sudah dicentang.`;
+          }
+          motorControls();
+          return;
+        }
+        if (p.length !== 11 || p[0] !== "ATT") return;
+        let [t, rollFc, pitchFc, yawFc, gx, gy, gz, ax, ay, az] = p.slice(1).map(Number);
+        if (![t, rollFc, pitchFc, yawFc, gx, gy, gz, ax, ay, az].every(Number.isFinite)) return;
+        gx /= G;
+        gy /= G;
+        gz /= G;
+        ax /= A;
+        ay /= A;
+        az /= A;
+        out("ax", ax, " g");
+        out("ay", ay, " g");
+        out("az", az, " g");
+        out("gx", gx, " °/s");
+        out("gy", gy, " °/s");
+        out("gz", gz, " °/s");
+        roll = rollFc;
+        pitch = pitchFc;
+        yaw = yawFc;
+        last = t;
+        draw();
+        $("health").textContent = "IMU HEALTHY";
+      }
+      async function loop() {
+        let dec = new TextDecoder(),
+          buf = "";
+        try {
+          while (on) {
+            let { value, done } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let a = buf.split(/\r?\n/);
+            buf = a.pop();
+            a.forEach(consume);
+          }
+        } finally {
+          try {
+            reader.releaseLock();
+          } catch {}
+        }
+      }
+      $("connect").onclick = async () => {
+        if (!("serial" in navigator)) {
+          return ($("link").textContent = "Use Chrome or Edge");
+        }
+        try {
+          port = await navigator.serial.requestPort({
+            filters: [{ usbVendorId: 0x0483 }],
+          });
+          await port.open({ baudRate: 115200, bufferSize: 1024 });
+          on = true;
+          last = undefined;
+          $("connect").textContent = "Connected";
+          $("connect").disabled = true;
+          $("reset").disabled = false;
+          $("dot").classList.add("on");
+          $("link").textContent = "USB connected";
+          $("connect-card").classList.add("hidden");
+          $("hud").classList.remove("hidden");
+          $("flight-state").textContent = "CONNECTED";
+          $("flight-detail").textContent = "IMU telemetry active";
+          $("instruction").textContent =
+            "IMU terhubung. Letakkan FC di meja lalu kalibrasi gyro.";
+          controls();
+          reader = port.readable.getReader();
+          loop();
+          send("CFG,ARM,GET");
+        } catch (e) {
+          $("link").textContent = "Cannot connect: " + e.message;
+        }
+      };
+      $("reset").onclick = () => {
+        headingOffset = yaw;
+        draw();
+      };
+      $("gyro").onclick = () => send("CAL,GYRO");
+      $("acc").onclick = () => {
+        step = 0;
+        $("capture").classList.remove("hidden");
+        pose();
+        $("status").textContent =
+          "Ikuti enam orientasi drone. Firmware mengenali arah sensor otomatis.";
+      };
+      $("capture").onclick = () => send("CAL,ACC,AUTO");
+      $("apply-arm-config").onclick = () => {
+        const channel = $("arm-channel").value;
+        const polarity = $("arm-polarity").value;
+        $("arm-config-status").textContent = "Sending arm configuration…";
+        send(`CFG,ARM,${channel},${polarity}`);
+      };
+      $("props-removed").onchange = motorControls;
+      $("motor-test-status").textContent = "Centang propeller dilepas untuk mengaktifkan test motor.";
+      $("enable-motor-test").onclick = async () => {
+        motorTestReady = true;
+        $("enable-motor-test").textContent = "Motor test active";
+        $("motor-test-status").textContent = "MOTOR TEST ACTIVE — pilih satu motor. Output akan berhenti otomatis setelah 3 detik.";
+        motorControls();
+        await send("MOTOR,TEST,ENABLE");
+      };
+      $("disable-motor-test").onclick = async () => {
+        await send("MOTOR,TEST,DISABLE");
+        motorTestReady = false;
+        $("enable-motor-test").textContent = "Enable motor test";
+        $("motor-test-status").textContent = "Motor test dihentikan. Output dikunci pada 1000 µs.";
+        resetMotorSliders();
+        motorControls();
+      };
+      document.querySelectorAll(".motor-slider-input").forEach((slider) => {
+        const applySlider = () => {
+          const motor = slider.dataset.motor;
+          const pulse = Number(slider.value);
+          $(`motor-slider-value-${motor}`).textContent = `${pulse} µs`;
+          if (!motorTestReady) return;
+          send(`MOTOR,TEST,${motor},${pulse}`);
+          $("motor-test-status").textContent = `M${motor}: ${pulse} µs — auto-stop 3 detik setelah perubahan terakhir.`;
+          clearTimeout(motorSliderTimers[motor]);
+          motorSliderTimers[motor] = setTimeout(() => {
+            slider.value = 1000;
+            $(`motor-slider-value-${motor}`).textContent = "1000 µs";
+          }, 3100);
+        };
+        slider.oninput = applySlider;
+        slider.onchange = applySlider;
+      });
+      $("map-connect").onclick = () => $("connect").click();
+      $("nav-fly").onclick = (event) => {
+        event.preventDefault();
+        $("fly-view").classList.remove("hidden"); $("setup-view").classList.add("hidden");
+        document.querySelectorAll("nav a").forEach((item) => item.classList.remove("active"));
+        $("nav-fly").classList.add("active");
+        $("crumb").textContent = "Fly View / Live telemetry";
+      };
+      const openModule = (navId, panelId, title, subtitle) => {
+        $(navId).onclick = (event) => {
+          event.preventDefault();
+          $("setup-view").classList.remove("hidden"); $("fly-view").classList.add("hidden");
+          document.querySelectorAll("nav a").forEach((item) => item.classList.remove("active"));
+          $(navId).classList.add("active");
+          document.querySelectorAll(".setup-panel").forEach((panel) => panel.classList.add("hidden"));
+          $(panelId).classList.remove("hidden");
+          $("setup-title").textContent = title; $("setup-subtitle").textContent = subtitle;
+          $("crumb").textContent = title === "Sensors" ? "Vehicle Setup / Sensors / IMU Calibration" : `Vehicle Setup / ${title}`;
+        };
+      };
+      openModule("nav-sensors", "sensor-panel", "Sensors", "GY-BMI160 6-DoF · Gyroscope & Accelerometer");
+      openModule("nav-radio", "radio-panel", "Radio", "FS-i6 / FS-iA6B iBUS input monitor and channel test");
+      openModule("nav-battery", "battery-panel", "Battery", "Power monitoring and cell voltage");
+      openModule("nav-actuators", "actuators-panel", "Actuators", "Quad-X motor assignment, PWM outputs, and bench test");
+      openModule("nav-parameters", "parameters-panel", "Parameters", "PX4-inspired FC configuration modules");
+    </script>
+  </body>
+</html>
